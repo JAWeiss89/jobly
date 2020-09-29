@@ -1,0 +1,31 @@
+{
+  "name": "jobly",
+  "version": "1.0.0",
+  "description": "A Job Searching API",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JAWeiss89/jobly.git"
+  },
+  "keywords": [
+    "API",
+    "Node",
+    "Express",
+    "PostgreSQL"
+  ],
+  "author": "Jorge Weiss",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JAWeiss89/jobly/issues"
+  },
+  "homepage": "https://github.com/JAWeiss89/jobly#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "pg": "^8.3.3",
+    "supertest": "^5.0.0"
+  }
+}
