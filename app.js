@@ -5,10 +5,15 @@ const express = require("express");
 const ExpressError = require("./helpers/expressError");
 
 const morgan = require("morgan");
-
 const app = express();
 
 app.use(express.json());
+
+const companyRoutes = require("./routes/companies");
+
+app.use("/companies/", companyRoutes);
+
+
 
 // add logging system
 app.use(morgan("tiny"));

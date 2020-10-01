@@ -24,7 +24,10 @@
   },
   "homepage": "https://github.com/JAWeiss89/jobly#readme",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "jsonschema": "^1.2.7",
+    "morgan": "^1.10.0",
     "pg": "^8.3.3",
     "supertest": "^5.0.0"
   }
