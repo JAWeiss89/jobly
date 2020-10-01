@@ -1,6 +1,8 @@
 const express = require("express");
 const ExpressError = require("../helpers/expressError");
 const Company = require("../models/company");
+const jsonschema = require("jsonschema");
+const companySchema = require("../schemas/company.json");
 
 const router = new express.Router();
 
@@ -22,7 +24,13 @@ router.get("/", async function (req, res, next) {
 
 router.post("/", async function(req, res, next) {
     try {
-        
+        const validationResults = jsonschema.validate(req.body, companySchema);
+        if (!validationResults.valid) {
+            const errors = validationResults.errors.map(error => error.stack);
+            throw new ExpressError(errors, 400);
+        } 
+        const company = await Company.create(req.body.company)
+        return res.status(201).json({company})
 
     } catch(err) {
         next(err);
