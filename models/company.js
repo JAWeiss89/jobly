@@ -1,5 +1,8 @@
 const db = require("../db");
 const searchParams = require("../helpers/searchParams");
+const partialUpdate = require("../helpers/partialUpdate");
+const ExpressError = require("../helpers/expressError");
+
 
 class Company {
     
@@ -21,6 +24,17 @@ class Company {
         return companies;
     }
 
+    static async getOne(handle) {
+        const results = await db.query(
+            `SELECT * FROM companies
+            WHERE handle=$1`, [handle]
+        )
+        if (results.rows.length===0) {
+            throw new ExpressError(`Could not find a company with handle ${handle}.`, 404)
+        }
+        return results.rows[0];
+    }
+
     static async create(newCompanyObj) {
         // assume obj has all methods
         const { handle, name, num_employees, description, logo_url } = newCompanyObj;
@@ -32,6 +46,16 @@ class Company {
             `, 
             [handle, name, num_employees, description, logo_url]
         );
+        return result.rows[0];
+    }
+
+    static async update(handle, companyData) {
+        const {query, values} = partialUpdate('companies', companyData, 'handle', handle);
+
+        const result = await db.query(query, values);
+        if (result.rows.length===0) {
+            throw new ExpressError(`Could not find a company with handle ${handle}.`, 404)
+        }
         return result.rows[0];
     }
 

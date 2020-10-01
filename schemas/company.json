@@ -36,11 +36,6 @@
                 }
             ],
             "required": [
-                "handle",
-                "name",
-                "num_employees",
-                "description",
-                "logo_url"
             ],
             "properties": {
                 "handle": {
