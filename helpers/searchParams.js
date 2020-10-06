@@ -19,16 +19,22 @@
 function filterResults(table, params) {
     // Keep track of params indexes
     let idx = 1;
-    let queryString = `SELECT handle, name FROM ${table} WHERE `; // Rest of query added later
+    let queryString = `SELECT * FROM ${table} WHERE `; // Rest of query added later
     let searchParams = []
 
     for (let param in params) {
-        if (param == 'search') {
+        if (param == 'search' && table=="companies") {
             searchParams.push(`lower(name) LIKE $${idx}`)
+        } else if (param == 'search' && table=="jobs") {
+            searchParams.push(`lower(title) LIKE $${idx}`)
         } else if (param == 'min_employees') {
             searchParams.push(`num_employees >= $${idx}`)
         } else if (param == 'max_employees') {
             searchParams.push(`num_employees <= $${idx}`)
+        } else if (param == 'min_salary') {
+            searchParams.push(`salary >= $${idx}`)
+        } else if (param == 'max_salary') {
+            searchParams.push(`salary <= $${idx}`)
         }
         idx++;
     }
@@ -44,7 +50,6 @@ function filterResults(table, params) {
     // Get all the param values into an array
     let values = Object.values(params);
     
-
     return { queryString, values };
 }
 

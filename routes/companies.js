@@ -2,6 +2,7 @@ const express = require("express");
 const ExpressError = require("../helpers/expressError");
 const Company = require("../models/company");
 const jsonschema = require("jsonschema");
+const newCompanySchema = require("../schemas/newCompany.json");
 const companySchema = require("../schemas/company.json");
 
 const router = new express.Router();
@@ -24,7 +25,7 @@ router.get("/", async function (req, res, next) {
 
 router.post("/", async function(req, res, next) {
     try {
-        const validationResults = jsonschema.validate(req.body, companySchema);
+        const validationResults = jsonschema.validate(req.body, newCompanySchema);
         if (!validationResults.valid) {
             const errors = validationResults.errors.map(error => error.stack);
             throw new ExpressError(errors, 400);
@@ -58,6 +59,18 @@ router.patch("/:handle", async function(req, res, next) {
         }
         const company = await Company.update(handle, req.body.company);
         return res.json({company})
+    } catch(err) {
+        next(err);
+    }
+})
+
+router.delete("/:handle", async function (req, res, next) {
+    try {
+        const {handle} = req.params;
+        const companyDeleted = await Company.delete(handle);
+
+        return res.json({message: `Company ${companyDeleted.name} deleted`})
+
     } catch(err) {
         next(err);
     }

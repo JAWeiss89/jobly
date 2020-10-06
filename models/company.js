@@ -59,6 +59,16 @@ class Company {
         return result.rows[0];
     }
 
+    static async delete(handle) {
+        const results = await db.query(
+            `DELETE FROM companies WHERE handle=$1 RETURNING name`, [handle]
+        )
+        if (results.rows.length===0) {
+            throw new ExpressError(`Could not find a company with handle ${handle}.`, 404)
+        }
+        return results.rows[0];
+    }
+
 }
 
 module.exports = Company;
