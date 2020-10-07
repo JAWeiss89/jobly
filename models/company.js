@@ -29,9 +29,14 @@ class Company {
             `SELECT * FROM companies
             WHERE handle=$1`, [handle]
         )
+        const jobResults = await db.query(
+            `SELECT title, salary FROM jobs
+            WHERE company_handle=$1`, [handle]
+        )
         if (results.rows.length===0) {
             throw new ExpressError(`Could not find a company with handle ${handle}.`, 404)
         }
+        results.rows[0].jobs = jobResults.rows;
         return results.rows[0];
     }
 

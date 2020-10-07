@@ -38,12 +38,10 @@
                 }
             ],
             "required": [
-                "id",
                 "title",
                 "salary",
                 "equity",
-                "company_handle",
-                "date_posted"
+                "company_handle"
             ],
             "properties": {
                 "id": {
