@@ -13,13 +13,10 @@ const db = require("../../db");
 
 let testJob;
 
-beforeAll( async() => {
+beforeEach( async () => {
     await db.query(`DELETE FROM companies WHERE handle='gap'`);
     await db.query(`DELETE FROM jobs WHERE company_handle='gap'`);
-})
 
-beforeEach( async () => {
-    // await db.query(`DELETE FROM companies WHERE handle='gap'`);
 
     let companyResults = await db.query(
         `INSERT INTO companies 

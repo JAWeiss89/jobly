@@ -46,6 +46,7 @@ class Job {
         );
         return result.rows[0];
     }
+    
     static async update(id, jobData) {
         const {query, values} = partialUpdate('jobs', jobData, 'id', id);
         
