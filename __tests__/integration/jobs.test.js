@@ -1,9 +1,10 @@
 process.env.NODE_ENV="test";
 
 const request = require("supertest");
-const { patch } = require("../../app");
+const jwt = require("jsonwebtoken");
 const app = require("../../app");
 const db = require("../../db");
+const secretKey = require("../../keys/keys");
 
 // ===============================
 //   TEST SET UP 
@@ -12,6 +13,8 @@ const db = require("../../db");
 // Set up inserts one company AND one job into test database 
 
 let testJob;
+let testUserToken;
+let testAdminToken;
 
 beforeEach( async () => {
     await db.query(`DELETE FROM companies WHERE handle='gap'`);
@@ -32,6 +35,11 @@ beforeEach( async () => {
     )
     testJob = jobResults.rows[0];
 
+    const testNormalUser = { username: "user123", is_admin: false};
+    const testAdminUser  = { username: "user456", is_admin: true}
+    testUserToken = jwt.sign(testNormalUser, secretKey);
+    testAdminToken = jwt.sign(testAdminUser, secretKey);
+
 })
 
 // ===============================
@@ -45,58 +53,81 @@ describe("SAMPLE ROUTE", () => {
 })
 
 describe("GET /jobs", () => {
-    test("Gets all jobs", async() => {
-        const res = await request(app).get("/jobs");
+    test("Gets all jobs if authenticated", async() => {
+        const res = await request(app)
+            .get("/jobs")
+            .send({_token: testUserToken});
         expect(res.statusCode).toBe(200);
         expect(res.body.jobs).toHaveLength(1);
         expect(res.body.jobs[0].title).toEqual(testJob.title);
     })
+    test("Does not get jobs if not authenticated", async() => {
+        const res = await request(app)
+            .get("/jobs")
+            .send({_token: "fakeToken"});
+        expect(res.statusCode).toBe(500);
+    })
     test("Gets jobs with params", async() => {
-        const res = await request(app).get("/jobs?search=analyst");
+        const res = await request(app)
+            .get("/jobs?search=analyst")
+            .send({_token: testUserToken});
         expect(res.statusCode).toBe(200);
         expect(res.body.jobs).toHaveLength(1);
         expect(res.body.jobs[0].title).toEqual(testJob.title);
     })
     test("Gets jobs with params resulting in zero matches", async() => {
-        const res = await request(app).get("/jobs?search=sales");
+        const res = await request(app)
+            .get("/jobs?search=sales")
+            .send({_token: testUserToken});
         expect(res.statusCode).toBe(200);
         expect(res.body.jobs).toHaveLength(0);
     })
 })
 
 describe("POST /jobs", () => {
-    test("Adds new job to database when json sent is correctly formatted and company exists in db", async() => {
+    test("Adds new job to database when user is admin, json sent is correctly formatted and company exists in db", async() => {
         const newJob = {title: "Software Developer", salary:100000, equity:0.2, company_handle: 'gap'}
         const res = await request(app)
             .post("/jobs")
-            .send({job: newJob})
+            .send({job: newJob, _token: testAdminToken})
         expect(res.body.job.title).toEqual(newJob.title);
         expect(res.statusCode).toBe(201);
+    })
+    test("Does not add job if not admin", async () => {
+        const newJob = {title: "Software Developer", salary:100000, equity:0.2, company_handle: 'gap'}
+        const res = await request(app)
+            .post("/jobs")
+            .send({job: newJob, _token: testUserToken})
+        expect(res.statusCode).toBe(401);
     })
     test("Does not add job if company does not exist", async () => {
         const newJob = {title: "Software Developer", salary:100000, equity:0.2, company_handle: 'target'}
         const res = await request(app)
             .post("/jobs")
-            .send({job: newJob})
+            .send({job: newJob, _token: testAdminToken})
         expect(res.statusCode).toBe(500);
     })
     test("Does not add job if missing key information", async() => {
         const newJob = {salary:100000, equity:0.2, company_handle: 'gap'}
         const res = await request(app)
             .post("/jobs")
-            .send({job: newJob})
+            .send({job: newJob, _token: testAdminToken})
         expect(res.statusCode).toBe(400);
     })
 });
 
 describe("GET /jobs/:id", () => {
     test("Gets one job", async() => {
-        const res = await request(app).get(`/jobs/${testJob.id}`);
+        const res = await request(app)
+            .get(`/jobs/${testJob.id}`)
+            .send({_token: testUserToken});
         expect(res.statusCode).toBe(200);
         expect(res.body.job.title).toEqual(testJob.title);
     })
     test("Returns 404 if job does not exist", async() => {
-        const res = await request(app).get("/jobs/10000");
+        const res = await request(app)
+            .get("/jobs/10000")
+            .send({_token: testUserToken});
         expect(res.statusCode).toBe(404);
     })
 })
@@ -106,37 +137,61 @@ describe("PATCH /jobs/:id", () => {
         const changes = {title: "Web Developer", salary: 200000};
         const res = await request(app)
             .patch(`/jobs/${testJob.id}`)
-            .send({job: changes});
+            .send({job: changes, _token: testAdminToken});
         expect(res.statusCode).toBe(200);
         expect(res.body.job.title).toEqual(changes.title);
         expect(res.body.job.company_handle).toEqual('gap');
+    })
+    test("Doesnt not job if not admin", async() => {
+        const changes = {title: "Web Developer", salary: 200000};
+        const res = await request(app)
+            .patch(`/jobs/${testJob.id}`)
+            .send({job: changes, _token: testUserToken});
+        expect(res.statusCode).toBe(401);
     })
     test("Returns 404 if job id does not exist", async() => {
         const changes = {title: "Web Developer", salary: 200000};
         const res = await request(app)
             .patch(`/jobs/10000`)
-            .send({job: changes});
+            .send({job: changes, _token: testAdminToken});
         expect(res.statusCode).toBe(404);
     })
     test("Returns error if sent data is not as expected", async() => {
         const changes = {title: 40000, salary: "120000"};
         const res = await request(app)
             .patch(`/jobs/${testJob.id}`)
-            .send({job: changes});
+            .send({job: changes, _token: testAdminToken});
         expect(res.statusCode).toBe(400);
     })
 })
 describe("DELETE /jobs/:id", () => {
     test("Returns 404 if job doesn't exist", async() => {
-        const res = await request(app).delete("/jobs/1234");
+        const res = await request(app)
+            .delete("/jobs/1234")
+            .send({_token: testAdminToken});
         expect(res.statusCode).toBe(404);
     })
-    test("Deletes job that exists", async() => {
-        const res = await request(app).delete(`/jobs/${testJob.id}`);
+    test("Deletes job that exists if admin", async() => {
+        const res = await request(app)
+            .delete(`/jobs/${testJob.id}`)
+            .send({_token: testAdminToken});
         expect(res.statusCode).toBe(200);
 
-        const res2 = await request(app).get("/jobs");
+        const res2 = await request(app)
+            .get("/jobs")
+            .send({_token: testAdminToken});
         expect(res2.body.jobs).toHaveLength(0);
+    })
+    test("Does not delete job if not admin", async() => {
+        const res = await request(app)
+            .delete(`/jobs/${testJob.id}`)
+            .send({_token: testUserToken});
+        expect(res.statusCode).toBe(401);
+
+        const res2 = await request(app)
+            .get("/jobs")
+            .send({_token: testUserToken});
+        expect(res2.body.jobs).toHaveLength(1);
     })
 })
 
