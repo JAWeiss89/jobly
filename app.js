@@ -1,21 +1,25 @@
 /** Express app for jobly. */
 
 const express = require("express");
-
+const {authenticateJWT} = require("./middleware/auth");
 const ExpressError = require("./helpers/expressError");
 
 const morgan = require("morgan");
 const app = express();
 
 app.use(express.json());
+app.use(authenticateJWT);
 
 const companyRoutes = require("./routes/companies");
 const jobRoutes = require("./routes/jobs");
 const userRoutes = require("./routes/users");
+const authRoutes = require("./routes/auth");
+
 
 app.use("/companies/", companyRoutes);
 app.use("/jobs", jobRoutes);
 app.use("/users", userRoutes);
+app.use("/", authRoutes);
 
 
 // add logging system

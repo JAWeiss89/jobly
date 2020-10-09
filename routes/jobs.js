@@ -4,10 +4,11 @@ const Job = require("../models/job");
 const jsonschema = require("jsonschema");
 const newJobSchema = require("../schemas/newJob.json");
 const jobSchema = require("../schemas/job.json");
+const {ensureLoggedIn, ensureAdmin} = require("../middleware/auth");
 
 const router = new express.Router();
 
-router.get("/", async function(req, res, next) {
+router.get("/", ensureLoggedIn, async function(req, res, next) {
     try {
         if (Object.keys(req.query).length == 0) {
             const jobs = await Job.getAll();
@@ -36,7 +37,7 @@ router.post("/", async function(req, res, next) {
     }
 })
 
-router.get("/:id", async function(req, res, next) {
+router.get("/:id", ensureLoggedIn, async function(req, res, next) {
     try {
         const {id} = req.params;
         const job = await Job.getOne(id);

@@ -4,6 +4,8 @@ const User = require("../models/user");
 const jsonschema = require("jsonschema");
 const newUserSchema = require("../schemas/newUser.json");
 const userSchema = require("../schemas/user.json");
+const {ensureSameUser} = require("../middleware/auth");
+
 
 const router = new express.Router();
 
@@ -25,8 +27,10 @@ router.post("/", async function(req, res, next) {
             const errors = validationResults.errors.map(error => error.stack);
             throw new ExpressError(errors, 400);
         } 
-        const user = await User.create(req.body.user);
-        return res.status(201).json({user})
+        // const user = await User.create(req.body.user);
+        const token = await User.create(req.body.user);
+
+        return res.status(201).json({token})
 
     } catch(err) {
         next(err);
@@ -43,7 +47,7 @@ router.get("/:username", async function(req, res, next) {
     }
 })
 
-router.patch("/:username", async function(req, res, next) {
+router.patch("/:username", ensureSameUser, async function(req, res, next) {
     try {
         const {username} = req.params;
         const validationResults = jsonschema.validate(req.body, userSchema);
@@ -59,7 +63,7 @@ router.patch("/:username", async function(req, res, next) {
     }
 })
 
-router.delete("/:username", async function(req, res, next) {
+router.delete("/:username", ensureSameUser, async function(req, res, next) {
     try {
         const {username} = req.params;
         const userDeleted = await User.delete(username);

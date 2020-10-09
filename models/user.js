@@ -1,7 +1,9 @@
 const db = require("../db");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const secretKey = require("../keys/keys");
 const partialUpdate = require("../helpers/partialUpdate");
 const ExpressError = require("../helpers/expressError");
-
 
 class User {
     // static methods
@@ -25,17 +27,19 @@ class User {
 
     static async create(newUserObj) {
 
-        const { username, first_name, last_name, email, photo_url, is_admin } = newUserObj;
-        const password = "placeholder";
+        const { username, password,first_name, last_name, email, photo_url, is_admin } = newUserObj;
+        const hashedPassword = await bcrypt.hash(password, 12);
 
         const result = await db.query(
             `INSERT INTO users 
             (username, password, first_name, last_name, email, photo_url, is_admin)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING username, first_name, last_name, email, photo_url, is_admin`, 
-            [username, password, first_name, last_name, email, photo_url, is_admin]
+            [username, hashedPassword, first_name, last_name, email, photo_url, is_admin]
         )
-        return result.rows[0];
+        const user = result.rows[0];
+        let token = jwt.sign({username: user.username, is_admin: user.is_admin}, secretKey);
+        return token;
     }
 
     static async update(username, userData) {
@@ -56,6 +60,22 @@ class User {
             throw new ExpressError(`Could not find user with username ${username}`, 404);
         }
         return results.rows[0];
+    }
+
+    static async authenticate(username, password) {
+        const userResults = await db.query(`SELECT * FROM users WHERE username=$1`, [username]);
+        const user = userResults.rows[0];
+
+        if (user) {
+            if (await bcrypt.compare(password, user.password)) {
+                let token = jwt.sign({username}, secretKey);
+                return token;
+            } else {
+                throw new ExpressError("Could not authenticate user");
+            }
+        } else {
+            throw new ExpressError(`Could not find user with username ${username}`, 404);
+        }
     }
 
 }
