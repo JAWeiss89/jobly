@@ -22,7 +22,7 @@ router.get("/", ensureLoggedIn, async function(req, res, next) {
     }
 })
 
-router.post("/", async function(req, res, next) {
+router.post("/", ensureLoggedIn, ensureAdmin, async function(req, res, next) {
     try {
         const validationResults = jsonschema.validate(req.body, newJobSchema);
         if (!validationResults.valid) {
@@ -48,7 +48,7 @@ router.get("/:id", ensureLoggedIn, async function(req, res, next) {
     }
 })
 
-router.patch("/:id", async function(req, res, next) {
+router.patch("/:id", ensureLoggedIn, ensureAdmin, async function(req, res, next) {
     try {
         const {id} = req.params;
         const validationResults = jsonschema.validate(req.body, jobSchema);
@@ -64,7 +64,7 @@ router.patch("/:id", async function(req, res, next) {
     }
 })
 
-router.delete("/:id", async function(req, res, next) {
+router.delete("/:id", ensureLoggedIn, ensureAdmin, async function(req, res, next) {
     try {
         const {id} = req.params;
         const jobDeleted = await Job.delete(id);

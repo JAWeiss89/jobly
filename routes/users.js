@@ -4,7 +4,7 @@ const User = require("../models/user");
 const jsonschema = require("jsonschema");
 const newUserSchema = require("../schemas/newUser.json");
 const userSchema = require("../schemas/user.json");
-const {ensureSameUser} = require("../middleware/auth");
+const {ensureLoggedIn, ensureSameUser} = require("../middleware/auth");
 
 
 const router = new express.Router();
@@ -47,7 +47,7 @@ router.get("/:username", async function(req, res, next) {
     }
 })
 
-router.patch("/:username", ensureSameUser, async function(req, res, next) {
+router.patch("/:username", ensureLoggedIn, ensureSameUser, async function(req, res, next) {
     try {
         const {username} = req.params;
         const validationResults = jsonschema.validate(req.body, userSchema);
@@ -63,7 +63,7 @@ router.patch("/:username", ensureSameUser, async function(req, res, next) {
     }
 })
 
-router.delete("/:username", ensureSameUser, async function(req, res, next) {
+router.delete("/:username", ensureLoggedIn, ensureSameUser, async function(req, res, next) {
     try {
         const {username} = req.params;
         const userDeleted = await User.delete(username);

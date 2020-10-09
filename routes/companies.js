@@ -24,7 +24,7 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
 })
 
 
-router.post("/", ensureAdmin, async function(req, res, next) {
+router.post("/", ensureLoggedIn, ensureAdmin, async function(req, res, next) {
     try {
         const validationResults = jsonschema.validate(req.body, newCompanySchema);
         if (!validationResults.valid) {
@@ -50,7 +50,7 @@ router.get("/:handle", ensureLoggedIn, async function(req, res, next) {
     }
 })
 
-router.patch("/:handle", ensureAdmin, async function(req, res, next) {
+router.patch("/:handle", ensureLoggedIn, ensureAdmin, async function(req, res, next) {
     try {
         const {handle} = req.params;
         const validationResults = jsonschema.validate(req.body, companySchema);
@@ -65,7 +65,7 @@ router.patch("/:handle", ensureAdmin, async function(req, res, next) {
     }
 })
 
-router.delete("/:handle", ensureAdmin, async function (req, res, next) {
+router.delete("/:handle", ensureLoggedIn, ensureAdmin, async function (req, res, next) {
     try {
         const {handle} = req.params;
         const companyDeleted = await Company.delete(handle);
