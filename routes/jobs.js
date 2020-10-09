@@ -10,11 +10,22 @@ const router = new express.Router();
 
 router.get("/", ensureLoggedIn, async function(req, res, next) {
     try {
-        if (Object.keys(req.query).length == 0) {
-            const jobs = await Job.getAll();
+        // Check if query params are valid
+        let paramsValidated = false;
+        let queryParams = Object.keys(req.query); 
+        let acceptableParams = ['search', 'min_salary', 'max_salary'];
+        for (let param of queryParams) {
+            if (acceptableParams.includes(param)) {
+                paramsValidated = true;
+            }
+        }
+        if (Object.keys(req.query).length !== 0 && paramsValidated) {
+            // if there are queries in request and they are valid get filtered results
+            const jobs = await Job.getSome(req.query);
             return res.json({jobs})
         } else {
-            const jobs = await Job.getSome(req.query);
+            // else get all of the jobs
+            const jobs = await Job.getAll();
             return res.json({jobs})
         }
     } catch(err) {

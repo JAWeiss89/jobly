@@ -10,11 +10,22 @@ const router = new express.Router();
 
 router.get("/", ensureLoggedIn, async function (req, res, next) {
     try {
-        if (Object.keys(req.query).length === 0) { // if no queries in request, get all companies
-            const companies = await Company.getAll();
-            return res.json({companies});
-        } else { // else filter companies
+        // Check if query params are valid
+        let paramsValidated = false;
+        let queryParams = Object.keys(req.query); 
+        let acceptableParams = ['search', 'min_employees', 'max_employees'];
+        for (let param of queryParams) {
+            if (acceptableParams.includes(param)) {
+                paramsValidated = true;
+            }
+        }
+        if (Object.keys(req.query).length !== 0 && paramsValidated) {
+            // if there are queries in request and they are valid get filtered results
             const companies = await Company.getSome(req.query);
+            return res.json({companies});
+        } else { 
+            // else get all of the companies
+            const companies = await Company.getAll();
             return res.json({companies});
         }
 

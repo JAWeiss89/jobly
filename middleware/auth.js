@@ -5,7 +5,7 @@ const ExpressError = require("../helpers/expressError");
 
 function authenticateJWT(req, res, next) {
     try {
-        if (req.body._token) {
+        if (req.body._token) { // This middleware will run on every route so authentication of JWT will be attempted only if user is sending token
             const token = req.body._token;
             const payload = jwt.verify(token, secretKey);
             req.user = payload; // Since jwt has been verified, we add user key to request

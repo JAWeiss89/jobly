@@ -65,10 +65,11 @@ class User {
     static async authenticate(username, password) {
         const userResults = await db.query(`SELECT * FROM users WHERE username=$1`, [username]);
         const user = userResults.rows[0];
+        const is_admin = user.is_admin;
 
         if (user) {
             if (await bcrypt.compare(password, user.password)) {
-                let token = jwt.sign({username}, secretKey);
+                let token = jwt.sign({username, is_admin}, secretKey);
                 return token;
             } else {
                 throw new ExpressError("Could not authenticate user");
