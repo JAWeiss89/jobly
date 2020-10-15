@@ -1,3 +1,4 @@
+<img src="./images/jobly_logo.png">
 # jobly
 JSON API application using NodeJS/Express with resources on companies and jobs. 
 
